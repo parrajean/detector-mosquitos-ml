@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector de Mosquitos</title>
+    <style>
+        /* === ESTILOS GENERALES === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* === HEADER === */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* === LAYOUT PRINCIPAL === */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+        
+        /* === SECCIÓN DE VIDEO === */
+        .video-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .video-section:hover {
+            transform: translateY(-5px);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .video-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+            min-height: 360px;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-ready { background: #51cf66; }
+        .status-detecting { background: #ffd43b; }
+        .status-calibrating { background: #ff6b6b; }
+        
+        /* === CONTROLES === */
+        .controls-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            height: fit-content;
+            animation: fadeInRight 0.8s ease 0.4s both;
+        }
+        
+        .control-group {
+            margin-bottom: 30px;
+        }
+        
+        .control-group h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .button-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .button:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary { background: linear-gradient(45deg, #667eea, #764ba2); color: white; }
+        .btn-success { background: linear-gradient(45deg, #51cf66, #40c057); color: white; }
+        .btn-warning { background: linear-gradient(45deg, #ffd43b, #fab005); color: #333; }
+        .btn-danger { background: linear-gradient(45deg, #ff6b6b, #fa5252); color: white; }
+        .btn-info { background: linear-gradient(45deg, #339af0, #228be6); color: white; }
+        
+        /* === SLIDERS === */
+        .slider-group {
+            margin-bottom: 20px;
+        }
+        
+        .slider-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .slider-container {
+            position: relative;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            transition: background 0.3s;
+            appearance: none;
+        }
+        
+        .slider:hover {
+            background: #ccc;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .slider-value {
+            position: absolute;
+            right: 0;
+            top: -25px;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* === ESTADÍSTICAS === */
+        .stats-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            grid-column: 1 / -1;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-label {
+            opacity: 0.95;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* === PROGRESS BAR === */
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        /* === SYSTEM STATUS === */
+        .system-status {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .system-status p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .system-status strong {
+            color: #667eea;
+        }
+        
+        /* === ANIMACIONES === */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* === RESPONSIVE === */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+            }
+        }
+        
+        /* === NOTIFICACIONES === */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideInRight 0.5s ease;
+            max-width: 300px;
+        }
+        
+        .notification.success {
+            border-left: 4px solid #51cf66;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #339af0;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>Detector de Mosquitos</h1>
+            <p>Sistema inteligente de detección en tiempo real</p>
+        </div>
+        
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="main-content">
+            <!-- SECCIÓN DE VIDEO -->
+            <div class="video-section">
+                <h2 class="section-title">📹 Vista de Cámara en Vivo</h2>
+                
+                <div class="video-container">
+                    <img src="/video_feed" class="video-stream" alt="Video Stream" id="videoStream">
+                    <div class="video-overlay">
+                        <span class="status-indicator status-ready" id="statusIndicator"></span>
+                        <span id="statusText">Listo</span>
+                    </div>
+                </div>
+                
+                <!-- CONTROLES DE VIDEO -->
+                <div class="button-grid">
+                    <button class="button btn-primary" onclick="calibrateBackground()">
+                        📷 Calibrar Fondo (15s)
+                    </button>
+                    <button class="button btn-success" id="detectionBtn" onclick="toggleDetection()">
+                        🔍 Iniciar Detección
+                    </button>
+                    <button class="button btn-warning" onclick="captureImage()">
+                        📸 Capturar Imagen
+                    </button>
+                    <button class="button btn-danger" onclick="resetStats()">
+                        🔄 Reset Estadísticas
+                    </button>
+                </div>
+                
+                <!-- BARRA DE PROGRESO DE CALIBRACIÓN -->
+                <div class="progress-container" id="calibrationProgress">
+                    <p style="margin-bottom: 8px; font-weight: 600; color: #667eea;">Calibrando fondo...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN DE CONTROLES -->
+            <div class="controls-section">
+                <div class="control-group">
+                    <h3>⚙️ Configuración de Detección</h3>
+                    
+                    <div class="slider-group">
+                        <label for="minArea">
+                            Área Mínima
+                            <span class="slider-value" id="minAreaValue">15</span>
+                        </label>
+                        <input type="range" id="minArea" class="slider" min="5" max="100" value="15">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label for="maxArea">
+                            Área Máxima
+                            <span class="slider-value" id="maxAreaValue">300</span>
+                        </label>
+                        <input type="range" id="maxArea" class="slider" min="100" max="2000" value="300">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label for="sensitivity">
+                            Sensibilidad
+                            <span class="slider-value" id="sensitivityValue">0.85</span>
+                        </label>
+                        <input type="range" id="sensitivity" class="slider" min="0.5" max="0.99" step="0.01" value="0.85">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Estado del Sistema</h3>
+                    <div class="system-status" id="systemStatus">
+                        <p><strong>Estado:</strong> <span id="currentStatus">Listo</span></p>
+                        <p><strong>FPS:</strong> <span id="currentFPS">0</span></p>
+                        <p><strong>Última detección:</strong> <span id="lastDetection">N/A</span></p>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <button class="button btn-info" onclick="viewCaptures()">
+                        🖼️ Ver Capturas
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN DE ESTADÍSTICAS -->
+        <div class="stats-section">
+            <h2 class="section-title">📊 Estadísticas en Tiempo Real</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDetections">0</div>
+                    <div class="stat-label">🦟 Mosquitos Detectados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="currentFPSDisplay">0</div>
+                    <div class="stat-label">⚡ FPS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="precisionDisplay">N/A</div>
+                    <div class="stat-label">🎯 Precisión Estimada</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="sessionTime">00:00</div>
+                    <div class="stat-label">⏱️ Tiempo de Sesión</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // === VARIABLES GLOBALES ===
+        let isDetecting = false;
+        let isCalibrating = false;
+        let sessionStartTime = Date.now();
+        let updateInterval = null;
+        
+        // === INICIALIZACIÓN ===
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Aplicación web iniciada');
+            
+            // Cargar configuración inicial
+            loadConfiguration();
+            
+            // Iniciar actualización de estadísticas
+            startStatsUpdate();
+            
+            // Configurar event listeners
+            setupEventListeners();
+            
+            // Mostrar notificación de bienvenida
+            showNotification('Aplicación lista para usar', 'success');
+        });
+        
+        // === CONFIGURACIÓN DE EVENT LISTENERS ===
+        function setupEventListeners() {
+            // Sliders
+            document.getElementById('minArea').addEventListener('input', function() {
+                document.getElementById('minAreaValue').textContent = this.value;
+                updateConfig();
+            });
+            
+            document.getElementById('maxArea').addEventListener('input', function() {
+                document.getElementById('maxAreaValue').textContent = this.value;
+                updateConfig();
+            });
+            
+            document.getElementById('sensitivity').addEventListener('input', function() {
+                document.getElementById('sensitivityValue').textContent = this.value;
+                updateConfig();
+            });
+            
+            // Detectar errores en stream de video
+            document.getElementById('videoStream').addEventListener('error', function() {
+                console.error('Error cargando stream de video');
+                showNotification('Error en stream de video', 'error');
+            });
+        }
+        
+        // === ACTUALIZACIÓN DE ESTADÍSTICAS ===
+        function startStatsUpdate() {
+            updateInterval = setInterval(updateStats, 1000);
+        }
+        
+        function updateStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Actualizar valores
+                    document.getElementById('totalDetections').textContent = data.detections || 0;
+                    document.getElementById('currentFPS').textContent = data.fps || 0;
+                    document.getElementById('currentFPSDisplay').textContent = data.fps || 0;
+                    document.getElementById('precisionDisplay').textContent = data.precision || 'N/A';
+                    document.getElementById('currentStatus').textContent = data.status || 'Listo';
+                    document.getElementById('statusText').textContent = data.status || 'Listo';
+                    
+                    if (data.last_detection_time) {
+                        document.getElementById('lastDetection').textContent = data.last_detection_time;
+                    }
+                    
+                    // Actualizar indicador de estado
+                    updateStatusIndicator(data.status);
+                    
+                    // Actualizar tiempo de sesión
+                    updateSessionTime();
+                })
+                .catch(error => {
+                    console.error('Error actualizando estadísticas:', error);
+                });
+        }
+        
+        function updateStatusIndicator(status) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.className = 'status-indicator ';
+            
+            if (status.includes('Detectando')) {
+                indicator.className += 'status-detecting';
+            } else if (status.includes('Calibrando')) {
+                indicator.className += 'status-calibrating';
+            } else {
+                indicator.className += 'status-ready';
+            }
+        }
+        
+        function updateSessionTime() {
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            let timeStr = '';
+            if (hours > 0) {
+                timeStr = `${hours.toString().padStart(2, '0')}:`;
+            }
+            timeStr += `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('sessionTime').textContent = timeStr;
+        }
+        
+        // === CONTROL DE DETECCIÓN ===
+        function toggleDetection() {
+            const btn = document.getElementById('detectionBtn');
+            
+            if (!isDetecting) {
+                fetch('/api/start_detection', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            isDetecting = true;
+                            btn.textContent = '⏹️ Detener Detección';
+                            btn.className = 'button btn-danger';
+                            showNotification('Detección iniciada', 'success');
+                        } else {
+                            showNotification('Error: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Error iniciando detección', 'error');
+                    });
+            } else {
+                fetch('/api/stop_detection', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            isDetecting = false;
+                            btn.textContent = '🔍 Iniciar Detección';
+                            btn.className = 'button btn-success';
+                            showNotification('Detección detenida', 'info');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Error deteniendo detección', 'error');
+                    });
+            }
+        }
+        
+        // === CALIBRACIÓN ===
+        function calibrateBackground() {
+            if (isDetecting) {
+                showNotification('Detén la detección primero', 'error');
+                return;
+            }
+            
+            if (isCalibrating) {
+                showNotification('Ya hay una calibración en progreso', 'error');
+                return;
+            }
+            
+            const duration = 15; // segundos
+            
+            fetch('/api/calibrate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ duration: duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isCalibrating = true;
+                    showCalibrationProgress(duration);
+                    showNotification('Calibración iniciada', 'info');
+                } else {
+                    showNotification('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error iniciando calibración', 'error');
+            });
+        }
+        
+        function showCalibrationProgress(duration) {
+            const progressContainer = document.getElementById('calibrationProgress');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += (100 / duration);
+                progressFill.style.width = Math.min(progress, 100) + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        isCalibrating = false;
+                        showNotification('Calibración completada', 'success');
+                    }, 1000);
+                }
+            }, 1000);
+        }
+        
+        // === CAPTURA DE IMAGEN ===
+        function captureImage() {
+            fetch('/api/capture', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error capturando imagen', 'error');
+                });
+        }
+        
+        // === RESET ESTADÍSTICAS ===
+        function resetStats() {
+            if (confirm('¿Seguro que quieres resetear las estadísticas?')) {
+                fetch('/api/reset_stats', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            sessionStartTime = Date.now();
+                            showNotification('Estadísticas reseteadas', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Error reseteando estadísticas', 'error');
+                    });
+            }
+        }
+        
+        // === CONFIGURACIÓN ===
+        function loadConfiguration() {
+            fetch('/api/config')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('minArea').value = data.min_area;
+                    document.getElementById('maxArea').value = data.max_area;
+                    document.getElementById('sensitivity').value = data.sensitivity;
+                    
+                    document.getElementById('minAreaValue').textContent = data.min_area;
+                    document.getElementById('maxAreaValue').textContent = data.max_area;
+                    document.getElementById('sensitivityValue').textContent = data.sensitivity;
+                })
+                .catch(error => {
+                    console.error('Error cargando configuración:', error);
+                });
+        }
+        
+        function updateConfig() {
+            const config = {
+                min_area: document.getElementById('minArea').value,
+                max_area: document.getElementById('maxArea').value,
+                sensitivity: document.getElementById('sensitivity').value
+            };
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error actualizando configuración');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+        
+        // === VER CAPTURAS ===
+        function viewCaptures() {
+            fetch('/api/captures')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.captures && data.captures.length > 0) {
+                        alert(`Capturas disponibles: ${data.captures.length}\n\nVer en carpeta: /capturas/`);
+                    } else {
+                        showNotification('No hay capturas disponibles', 'info');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error obteniendo capturas', 'error');
+                });
+        }
+        
+        // === NOTIFICACIONES ===
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.5s ease reverse';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 3000);
+        }
+        
+        // === LIMPIEZA AL CERRAR ===
+        window.addEventListener('beforeunload', function() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
