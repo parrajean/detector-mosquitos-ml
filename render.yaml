@@ -2,8 +2,9 @@ services:
   - type: web
     name: detector-mosquitos-ml
     env: python
+    pythonVersion: 3.12.6
     buildCommand: |
-      pyenv global 3.12.6
       pip install --upgrade pip setuptools wheel
       pip install -r requirements.txt
     startCommand: gunicorn app:app
+
