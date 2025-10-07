@@ -1,0 +1,4 @@
+git add .
+git status          # Verificar que requirements.txt está en la lista
+git commit -m "Add: Archivos de configuración para Render"
+git push
