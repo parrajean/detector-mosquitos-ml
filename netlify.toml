@@ -1,9 +1,12 @@
 [build]
-  command = "pip install -r requirements.txt"
+  command = "python -m pip install --upgrade pip && pip install -r requirements.txt"
   publish = "."
 
 [build.environment]
   PYTHON_VERSION = "3.11"
+  # Deshabilitar mise
+  USE_MISE = "false"
+  MISE_SKIP = "true"
 
 [context.production.environment]
   PYTHON_VERSION = "3.11"
